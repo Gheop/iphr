@@ -1,0 +1,137 @@
+{
+  "meta": {
+    "title": "Régime IPHR — Inflation-Push Hawkish Repricing",
+    "subtitle": "DASHBOARD",
+    "sources": "Bloomberg · FMP · Data Puller V2 — données J+1/J · choc Hormuz démarré février 2026"
+  },
+  "sections": [
+    {
+      "id": "01", "title": "LE CHOC PÉTROLIER",
+      "cards": [
+        { "id": "brent", "label": "Brent Crude", "sourceTag": "$/bbl · BBG CO1", "prefix": "$", "decimals": 1,
+          "source": { "type": "yahoo", "symbol": "BZ=F" }, "context": "+81 % vs plus bas 12 mois",
+          "rules": [{ "op": ">=", "value": 90, "text": "CHOC", "tone": "alert" }],
+          "fallback": { "value": 109.3, "history": [60,62,65,70,78,85,92,98,103,107,108,109.3] } },
+        { "id": "wti", "label": "WTI Crude", "sourceTag": "$/bbl · BBG CL1", "prefix": "$", "decimals": 1,
+          "source": { "type": "yahoo", "symbol": "CL=F" }, "context": "+78 % vs plus bas 12 mois",
+          "rules": [{ "op": ">=", "value": 88, "text": "CHOC", "tone": "alert" }],
+          "fallback": { "value": 105.4, "history": [58,60,63,68,75,82,89,95,99,103,104,105.4] } },
+        { "id": "crack", "label": "Crack Spread 3-2-1", "sourceTag": "$/bbl · BBG CRK321R", "prefix": "$", "decimals": 1,
+          "compute": "crackSpread321", "inputs": { "cl": "wti", "rb": "rbob", "ho": "ho" },
+          "context": "vs normale ≈ $20",
+          "rules": [{ "op": ">=", "value": 40, "text": "RAFFINAGE", "tone": "warn" }],
+          "fallback": { "value": 54.7, "history": [20,22,25,28,33,38,44,49,52,54,55,54.7] } },
+        { "id": "rbob", "label": "_rbob", "source": { "type": "yahoo", "symbol": "RB=F" }, "hidden": true,
+          "fallback": { "value": 2.6, "history": [2.6] } },
+        { "id": "ho", "label": "_ho", "source": { "type": "yahoo", "symbol": "HO=F" }, "hidden": true,
+          "fallback": { "value": 2.7, "history": [2.7] } },
+        { "id": "backwardation", "label": "Backwardation Brent", "sourceTag": "Jul 26 vs Dec 27 · BBG", "suffix": " %", "decimals": 0,
+          "source": { "type": "config" }, "context": "$110 → $79 sur 17 mois", "badge": { "text": "ANTICIPATION", "tone": "ok" },
+          "fallback": { "value": -28, "history": [-5,-8,-12,-15,-18,-20,-23,-25,-26,-27,-28,-28] } }
+      ]
+    },
+    {
+      "id": "02", "title": "SIGNAL DE MARCHÉ : TAUX, DOLLAR, VOLATILITÉ",
+      "cards": [
+        { "id": "ust30", "label": "Treasury US 30 ans", "sourceTag": "% · FMP", "suffix": "%", "decimals": 2,
+          "source": { "type": "fred", "series": "DGS30" }, "context": "niveau 2007",
+          "rules": [{ "op": ">=", "value": 5, "text": "≥ 5%", "tone": "warn" }],
+          "fallback": { "value": 5.14, "history": [4.2,4.3,4.5,4.6,4.7,4.8,4.9,5.0,5.05,5.1,5.12,5.14] } },
+        { "id": "be10", "label": "Breakeven 10 ans", "sourceTag": "% · FRED", "suffix": "%", "decimals": 2,
+          "source": { "type": "fred", "series": "T10YIE" }, "context": "stable",
+          "rules": [{ "op": ">=", "value": 2.6, "text": "À SURVEILLER", "tone": "warn" }],
+          "badge": { "text": "STABLE", "tone": "ok" },
+          "fallback": { "value": 2.48, "history": [2.3,2.32,2.35,2.38,2.4,2.42,2.44,2.45,2.46,2.47,2.48,2.48] } },
+        { "id": "move", "label": "MOVE Index", "sourceTag": "vol obligataire", "decimals": 0,
+          "source": { "type": "yahoo", "symbol": "^MOVE" }, "context": "+28 % en 10 jours",
+          "rules": [{ "op": ">=", "value": 130, "text": "SPIKE", "tone": "alert" }],
+          "badge": { "text": "SPIKE", "tone": "alert" },
+          "fallback": { "value": 86, "history": [60,62,65,68,70,72,75,78,80,83,85,86] } },
+        { "id": "hyoas", "label": "High Yield OAS", "sourceTag": "bps · FRED", "suffix": " bps", "decimals": 0, "transform": "bpsFromPct",
+          "source": { "type": "fred", "series": "BAMLH0A0HYM2" }, "context": "pas de stress crédit",
+          "rules": [{ "op": ">=", "value": 290, "text": "CALME", "tone": "ok" }],
+          "badge": { "text": "CALME", "tone": "ok" },
+          "fallback": { "value": 280, "history": [310,305,300,298,295,292,290,288,285,283,281,280] } }
+      ]
+    },
+    {
+      "id": "03", "title": "ANTICIPATIONS D'INFLATION",
+      "cards": [
+        { "id": "michigan1y", "label": "Michigan 1 an", "sourceTag": "anticip. ménages", "suffix": "%", "decimals": 1,
+          "source": { "type": "fred", "series": "MICH" }, "context": "panique ménages",
+          "rules": [{ "op": ">=", "value": 4, "text": "ÉLEVÉ", "tone": "alert" }],
+          "fallback": { "value": 4.7, "history": [3.0,3.2,3.4,3.6,3.9,4.1,4.3,4.4,4.5,4.6,4.7,4.7] } },
+        { "id": "swap5y5y", "label": "5Y5Y Inflation Swap", "sourceTag": "%", "suffix": "%", "decimals": 2,
+          "source": { "type": "config" }, "context": "+17 bps depuis 1 mois", "badge": { "text": "PROCHE SEUIL", "tone": "warn" },
+          "fallback": { "value": 2.47, "history": [2.3,2.32,2.35,2.38,2.4,2.42,2.43,2.44,2.45,2.46,2.47,2.47] } },
+        { "id": "tips5y5y", "label": "5Y5Y Forward TIPS", "sourceTag": "% · FRED", "suffix": "%", "decimals": 2,
+          "source": { "type": "fred", "series": "T5YIFR" }, "context": "marché encore ancré",
+          "rules": [{ "op": ">=", "value": 2.6, "text": "PROCHE SEUIL", "tone": "warn" }],
+          "badge": { "text": "ANCRÉ", "tone": "ok" },
+          "fallback": { "value": 2.27, "history": [2.2,2.21,2.22,2.23,2.24,2.25,2.25,2.26,2.26,2.27,2.27,2.27] } },
+        { "id": "ismprices", "label": "ISM Prices Paid", "sourceTag": "mfg", "decimals": 1,
+          "source": { "type": "config" }, "context": "+26 pts en 4 mois", "badge": { "text": "HOT", "tone": "alert" },
+          "fallback": { "value": 84.6, "history": [58,60,63,67,71,74,77,80,82,83,84,84.6] } }
+      ]
+    },
+    {
+      "id": "04", "title": "STOCKS PÉTROLIERS",
+      "cards": [
+        { "id": "spr", "label": "SPR US", "sourceTag": "millions bbl · FRED", "suffix": " mb", "decimals": 0, "transform": "thousandsToMb",
+          "source": { "type": "fred", "series": "WCSSTUS1" }, "context": "-209 mb vs 2022", "badge": { "text": "VIDE", "tone": "alert" },
+          "fallback": { "value": 384, "history": [600,560,520,480,450,430,415,405,398,392,387,384] } },
+        { "id": "crude", "label": "US Commercial Crude", "sourceTag": "millions bbl · FRED", "suffix": " mb", "decimals": 0, "transform": "thousandsToMb",
+          "source": { "type": "fred", "series": "WCESTUS1" }, "context": "-13 mb en 3 semaines", "badge": { "text": "DRAW", "tone": "warn" },
+          "fallback": { "value": 453, "history": [475,472,470,468,466,464,462,460,458,456,454,453] } },
+        { "id": "oecd", "label": "OECD On-land Total", "sourceTag": "millions bbl", "suffix": " mb", "decimals": 0,
+          "source": { "type": "config" }, "context": "janv. 26 → avril 26 : -146 mb", "badge": { "text": "EN BAISSE", "tone": "warn" },
+          "fallback": { "value": 4075, "history": [4280,4250,4220,4200,4180,4160,4140,4120,4100,4090,4080,4075] } },
+        { "id": "floating", "label": "Floating Storage", "sourceTag": "millions bbl", "suffix": " mb", "decimals": 0,
+          "source": { "type": "config" }, "context": "à la moyenne", "badge": { "text": "NORMAL", "tone": "neutral" },
+          "fallback": { "value": 105, "history": [120,118,115,113,111,110,109,108,107,106,105,105] } }
+      ]
+    },
+    {
+      "id": "05", "title": "SALAIRES",
+      "cards": [
+        { "id": "atlantawage", "label": "Atlanta Fed Wage Tracker", "sourceTag": "% · FRED", "suffix": "%", "decimals": 1,
+          "source": { "type": "fred", "series": "FRBATLWGT3MMAUMHWGO" }, "context": "décélère",
+          "rules": [{ "op": ">=", "value": 4.5, "text": "TENDU", "tone": "warn" }],
+          "badge": { "text": "VERROU OK", "tone": "ok" },
+          "fallback": { "value": 3.6, "history": [6.1,5.8,5.5,5.1,4.8,4.5,4.2,4.0,3.9,3.8,3.7,3.6] } },
+        { "id": "euwage", "label": "Salaires négociés EU", "sourceTag": "% · ECB Wage Tracker", "suffix": "%", "decimals": 1,
+          "source": { "type": "config" }, "context": "4,7 % → 2,6 % (décélère)", "badge": { "text": "VERROU OK", "tone": "ok" },
+          "fallback": { "value": 2.6, "history": [4.7,4.5,4.2,3.9,3.6,3.3,3.1,2.9,2.8,2.7,2.6,2.6] } }
+      ]
+    }
+  ],
+  "scenario": {
+    "spiral": {
+      "label": "Scénario spirale", "probability": "≈ 25-30 %",
+      "bullets": [
+        "Ménages déjà en panique → Michigan 1 an à 4,8 %",
+        "5Y5Y swap à 8 bps de casser 2,55 %",
+        "ISM Prices Paid 84,6 → pricing power au plus haut",
+        "Si Hormuz dure > 12 mois, le choc devient structurel",
+        "Crack spreads records → pass-through diesel diffusant"
+      ]
+    },
+    "noSpiral": {
+      "label": "Pas de spirale", "probability": "≈ 70-75 %",
+      "bullets": [
+        "Salaires en décélération US (3,6 %) ET EU (2,6 %)",
+        "FMI : 75 % des épisodes prix+salaires ne spiralent pas",
+        "Michigan long terme qui plafonne à 3,4 %",
+        "Backwardation oil -28 % → le marché price un retour normal",
+        "Fed Warsh hawkish → crédibilité préservée"
+      ]
+    },
+    "thresholds": [
+      "Discours Warsh — 1ʳᵉ conf. FOMC 17 juin 2026",
+      "5Y5Y swap > 2,80 %",
+      "Atlanta wage > 4,5 % ↑",
+      "HY OAS > 290 bps",
+      "SPR > 347 mb"
+    ]
+  }
+}
