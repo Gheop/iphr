@@ -31,3 +31,14 @@ test("fetchEiaSeries construit l'URL avec seriesId + clé", async () => {
 test('fetchEiaSeries jette sur HTTP non-ok', async () => {
   await assert.rejects(() => fetchEiaSeries('steo', 'X', 'K', async () => ({ ok: false, status: 403 })), /403/);
 });
+
+test("parseEia trie par période même si l'ordre API est mélangé", () => {
+  const shuffled = { response: { data: [
+    { period: '2026-01', value: 2810 },
+    { period: '2026-03', value: 2860 },
+    { period: '2026-02', value: 2840 },
+  ] } };
+  const { value, history } = parseEia(shuffled);
+  assert.equal(value, 2860);
+  assert.deepEqual(history, [2810, 2840, 2860]);
+});

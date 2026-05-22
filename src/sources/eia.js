@@ -3,7 +3,8 @@ const MAX_HISTORY = 12;
 export function parseEia(json) {
   const data = json?.response?.data;
   if (!Array.isArray(data) || data.length === 0) return { value: null, history: [] };
-  const asc = [...data].reverse();
+  // Tri chronologique explicite par période (ne dépend pas de l'ordre renvoyé par l'API).
+  const asc = [...data].sort((a, b) => String(a.period).localeCompare(String(b.period)));
   const nums = asc.map((d) => Number(d.value)).filter((n) => Number.isFinite(n));
   const history = nums.slice(-MAX_HISTORY);
   return { value: history.length ? history[history.length - 1] : null, history };
