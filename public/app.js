@@ -18,8 +18,8 @@ async function refresh() {
         if (card.hidden) continue;
         const el = document.querySelector(`.card[data-id="${card.id}"]`);
         if (!el) continue;
-        el.querySelector('.card-value').firstChild &&
-          (el.querySelector('.card-value').childNodes[0].nodeValue = card.displayValue);
+        const valueEl = el.querySelector('.card-value');
+        if (valueEl?.firstChild) valueEl.firstChild.nodeValue = card.displayValue;
         el.classList.toggle('is-stale', !!card.stale);
         const path = el.querySelector('.spark path');
         if (path) path.setAttribute('d', sparkPath(card.history));
