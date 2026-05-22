@@ -77,6 +77,7 @@ export function buildModel(config, fetched) {
       const { value, history, stale } = resolveCard(card, fetched);
       return {
         id: card.id,
+        hidden: !!card.hidden,
         label: card.label,
         sourceTag: card.sourceTag || '',
         prefix: card.prefix || '',

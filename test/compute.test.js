@@ -145,3 +145,16 @@ test('buildModel renvoie "—" et value null si fallback absent', () => {
   assert.equal(card.displayValue, '—');
   assert.equal(card.stale, true);
 });
+
+test('buildModel propage le flag hidden', () => {
+  const config = { meta: {}, scenario: { spiral: {}, noSpiral: {}, thresholds: [] },
+    sections: [{ id: '01', title: 'OIL', cards: [
+      { id: 'rbob', label: '_rbob', hidden: true, source: { type: 'yahoo', symbol: 'RB=F' },
+        fallback: { value: 2.6, history: [2.6] } },
+      { id: 'brent', label: 'Brent', decimals: 1, source: { type: 'yahoo', symbol: 'BZ=F' },
+        fallback: { value: 100, history: [100] } },
+    ] }] };
+  const cards = buildModel(config, {}).sections[0].cards;
+  assert.equal(cards[0].hidden, true);
+  assert.equal(cards[1].hidden, false);
+});
