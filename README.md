@@ -31,9 +31,9 @@ npm test
 
 ## Analyse IA
 
-Le bloc scénario et les badges des cartes sans source de marché sont régénérés une fois par jour
-par l'API Anthropic, à partir des valeurs live du dashboard. Nécessite `ANTHROPIC_API_KEY` ;
-sans elle, le dashboard retombe sur le texte statique du config.
+Le bloc scénario et les badges des cartes sans source de marché sont régénérés chaque jour à
+5 h 30 (heure de Paris) par l'API Anthropic, à partir des valeurs live du dashboard. Nécessite
+`ANTHROPIC_API_KEY` ; sans elle, le dashboard retombe sur le texte statique du config.
 
 ## Origine
 
@@ -45,6 +45,11 @@ PAS sur le retour de l'inflation (Mai 2026) » : https://www.youtube.com/watch?v
 WTFPL — voir [LICENSE](LICENSE). Fais-en ce que tu veux.
 
 ## Changelog
+
+### v0.2.1 — Analyse IA à heure fixe (2026-05-22)
+
+- L'analyse IA quotidienne se déclenche désormais tous les jours à 5 h 30 (heure de Paris,
+  DST-aware) au lieu d'un cycle ancré au démarrage du pod. Configurable via `AI_HOUR`/`AI_MINUTE`.
 
 ### v0.2.0 — Analyse IA quotidienne et favicon (2026-05-22)
 
