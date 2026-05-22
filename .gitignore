@@ -6,3 +6,6 @@ data/
 
 # Docs de processus internes (specs/plans) — gardés en local
 docs/
+
+# Manifests de déploiement internes — gardés en local
+k3s/
