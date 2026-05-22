@@ -32,19 +32,26 @@ function formatValue(value, { decimals = 0, prefix = '', suffix = '' } = {}) {
 }
 
 function resolveCard(card, fetched) {
-  // 1. crack spread calculé
+  // 1. crack spread calculé (valeur + historique zippé depuis les inputs)
   if (card.compute === 'crackSpread321') {
     const { cl, rb, ho } = card.inputs;
     const f = fetched;
     if (f[cl]?.value != null && f[rb]?.value != null && f[ho]?.value != null) {
-      const v = crackSpread321(f[cl].value, f[rb].value, f[ho].value);
-      return { value: v, history: [], stale: false };
+      const value = crackSpread321(f[cl].value, f[rb].value, f[ho].value);
+      const hc = f[cl].history || [], hr = f[rb].history || [], hh = f[ho].history || [];
+      const n = Math.min(hc.length, hr.length, hh.length);
+      const history = [];
+      for (let i = 0; i < n; i++) {
+        history.push(crackSpread321(hc[hc.length - n + i], hr[hr.length - n + i], hh[hh.length - n + i]));
+      }
+      return { value, history, stale: false };
     }
-    return { value: card.fallback.value, history: card.fallback.history || [], stale: true };
+    const fb = card.fallback ?? {};
+    return { value: fb.value ?? null, history: fb.history ?? [], stale: true };
   }
   // 2. source live (fred/yahoo)
   const live = fetched[card.id];
-  if (live && live.value != null) {
+  if (live && Number.isFinite(live.value)) {
     let value = live.value;
     let history = live.history || [];
     if (card.transform === 'thousandsToMb') {
@@ -58,7 +65,8 @@ function resolveCard(card, fetched) {
     return { value, history, stale: false };
   }
   // 3. fallback config
-  return { value: card.fallback.value, history: card.fallback.history || [], stale: true };
+  const fb = card.fallback ?? {};
+  return { value: fb.value ?? null, history: fb.history ?? [], stale: true };
 }
 
 export function buildModel(config, fetched) {

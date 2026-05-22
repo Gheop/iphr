@@ -99,3 +99,49 @@ test("buildModel applique bpsFromPct (pct → bps)", () => {
   assert.equal(card.value, 280);
   assert.equal(card.displayValue, '280 bps');
 });
+
+test('buildModel retombe sur le fallback du crack si un input manque', () => {
+  const config = {
+    meta: {}, scenario: { spiral: {}, noSpiral: {}, thresholds: [] },
+    sections: [{ id: '01', title: 'OIL', cards: [
+      { id: 'crack', label: 'Crack', decimals: 1, prefix: '$',
+        compute: 'crackSpread321', inputs: { cl: 'wti', rb: 'rbob', ho: 'ho' },
+        fallback: { value: 54.7, history: [54.7] } },
+    ] }],
+  };
+  const card = buildModel(config, { wti: { value: 80, history: [80] } }).sections[0].cards[0];
+  assert.equal(card.value, 54.7);
+  assert.equal(card.stale, true);
+});
+
+test("buildModel calcule l'historique du crack spread depuis les inputs", () => {
+  const config = {
+    meta: {}, scenario: { spiral: {}, noSpiral: {}, thresholds: [] },
+    sections: [{ id: '01', title: 'OIL', cards: [
+      { id: 'crack', label: 'Crack', decimals: 1, prefix: '$',
+        compute: 'crackSpread321', inputs: { cl: 'wti', rb: 'rbob', ho: 'ho' },
+        fallback: { value: 0, history: [] } },
+    ] }],
+  };
+  const fetched = {
+    wti: { value: 80, history: [80, 80] },
+    rbob: { value: 2.4, history: [2.4, 2.4] },
+    ho: { value: 2.5, history: [2.5, 2.5] },
+  };
+  const card = buildModel(config, fetched).sections[0].cards[0];
+  assert.equal(card.history.length, 2);
+  assert.equal(Math.round(card.history[0] * 10) / 10, 22.2);
+});
+
+test('buildModel renvoie "—" et value null si fallback absent', () => {
+  const config = {
+    meta: {}, scenario: { spiral: {}, noSpiral: {}, thresholds: [] },
+    sections: [{ id: 'x', title: 'X', cards: [
+      { id: 'orphan', label: 'Orphan', decimals: 0, source: { type: 'config' } },
+    ] }],
+  };
+  const card = buildModel(config, {}).sections[0].cards[0];
+  assert.equal(card.value, null);
+  assert.equal(card.displayValue, '—');
+  assert.equal(card.stale, true);
+});
