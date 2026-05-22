@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sparklinePath, renderHtml } from '../src/render.js';
+import { sparklinePath, sparklineArea, renderHtml } from '../src/render.js';
 
 test('sparklinePath renvoie "" pour une série vide', () => {
   assert.equal(sparklinePath([], 100, 30), '');
@@ -15,6 +15,14 @@ test('sparklinePath commence par M et contient des L', () => {
 test('sparklinePath gère une série constante (pas de NaN)', () => {
   const d = sparklinePath([5, 5, 5], 100, 30);
   assert.doesNotMatch(d, /NaN/);
+});
+
+test('sparklineArea ferme le tracé jusqu’à la base (commence par M, finit par Z)', () => {
+  const d = sparklineArea([1, 2, 3], 100, 30);
+  assert.match(d, /^M/);
+  assert.match(d, /Z$/);
+  assert.doesNotMatch(d, /NaN/);
+  assert.equal(sparklineArea([], 100, 30), '');
 });
 
 test('renderHtml contient le titre et les sections', () => {

@@ -1,7 +1,8 @@
 {
   "name": "iphr",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
+  "license": "WTFPL",
   "type": "module",
   "engines": { "node": ">=22" },
   "scripts": {

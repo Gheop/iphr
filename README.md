@@ -4,9 +4,7 @@ Dashboard macro/marchés « Régime IPHR — Inflation-Push Hawkish Repricing »
 qui agrège des indicateurs (pétrole, taux, anticipations d'inflation, stocks, salaires) depuis
 FRED et Yahoo Finance, avec repli sur des valeurs configurables, et les affiche en thème sombre.
 
-## Pour qui
-
-Usage interne Gheop. En ligne sur https://iphr.gheop.com.
+En ligne : https://iphr.gheop.com
 
 ## Installation
 
@@ -31,13 +29,24 @@ npm test
 - Repli config (`config/indicators.json`) : indicateurs sans source gratuite (ISM Prices Paid,
   OECD on-land, floating storage, backwardation, 5Y5Y swap, salaires UE) et bloc scénario.
 
-## Déploiement
+## Origine
 
-Push sur `master` → GitHub Actions build l'image `ghcr.io/gheop/iphr`, la pousse, puis
-déploie par SSH sur le k3s (`kubectl set image`). Manifests dans `k3s/` (à appliquer une fois,
-copiés dans `Gheop/k3s/iphr/`).
+L'idée de ce dashboard vient de la vidéo « Point de marché : Ce que les marchés ne vous disent
+PAS sur le retour de l'inflation (Mai 2026) » : https://www.youtube.com/watch?v=zwg25zZMMpU
+
+## Licence
+
+WTFPL — voir [LICENSE](LICENSE). Fais-en ce que tu veux.
 
 ## Changelog
+
+### v0.1.1 — Sources réelles, footer public et courbes remplies (2026-05-22)
+
+- Sources affichées corrigées (FRED / Yahoo / repli config) dans l'en-tête et chaque carte
+- Repo passé en public, footer avec lien vers le code source
+- Remplissage dégradé translucide sous les sparklines
+- README : origine (vidéo) ajoutée, sections internes retirées, lien vers l'appli en ligne
+- Licence WTFPL
 
 ### v0.1.0 — Première version (2026-05-22)
 

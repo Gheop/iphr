@@ -1,11 +1,22 @@
 // Rafraîchit les valeurs et redessine les sparklines toutes les 60 s, sans recharger la page.
-function sparkPath(history, w = 120, h = 36) {
+function sparkPts(history, w = 120, h = 36) {
   const pts = (history || []).filter((n) => Number.isFinite(n));
-  if (!pts.length) return '';
-  if (pts.length === 1) return `M0,${h / 2} L${w},${h / 2}`;
+  if (!pts.length) return null;
+  if (pts.length === 1) return [[0, h / 2], [w, h / 2]];
   const min = Math.min(...pts), max = Math.max(...pts), span = max - min || 1, step = w / (pts.length - 1);
-  return pts.map((v, i) =>
-    `${i ? 'L' : 'M'}${(i * step).toFixed(2)},${(h - ((v - min) / span) * h).toFixed(2)}`).join(' ');
+  return pts.map((v, i) => [+(i * step).toFixed(2), +(h - ((v - min) / span) * h).toFixed(2)]);
+}
+
+function sparkPath(history) {
+  const p = sparkPts(history);
+  if (!p) return '';
+  return p.map(([x, y], i) => `${i ? 'L' : 'M'}${x},${y}`).join(' ');
+}
+
+function sparkArea(history, w = 120, h = 36) {
+  const p = sparkPts(history, w, h);
+  if (!p) return '';
+  return `${p.map(([x, y], i) => `${i ? 'L' : 'M'}${x},${y}`).join(' ')} L${w},${h} L0,${h} Z`;
 }
 
 async function refresh() {
@@ -21,8 +32,10 @@ async function refresh() {
         const valueEl = el.querySelector('.card-value');
         if (valueEl?.firstChild) valueEl.firstChild.nodeValue = card.displayValue;
         el.classList.toggle('is-stale', !!card.stale);
-        const path = el.querySelector('.spark path');
-        if (path) path.setAttribute('d', sparkPath(card.history));
+        const line = el.querySelector('.spark-line');
+        if (line) line.setAttribute('d', sparkPath(card.history));
+        const areaEl = el.querySelector('.spark-area');
+        if (areaEl) areaEl.setAttribute('d', sparkArea(card.history));
       }
     }
   } catch { /* réseau indispo : on garde l'affichage courant */ }
