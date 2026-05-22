@@ -69,12 +69,15 @@ function resolveCard(card, fetched) {
   return { value: fb.value ?? null, history: fb.history ?? [], stale: true };
 }
 
-export function buildModel(config, fetched) {
+export function buildModel(config, fetched, aiAnalysis = null) {
   const sections = config.sections.map((section) => ({
     id: section.id,
     title: section.title,
     cards: section.cards.map((card) => {
       const { value, history, stale } = resolveCard(card, fetched);
+      let badge = evaluateBadge(value, card.rules, card.badge);
+      const aiBadge = aiAnalysis && aiAnalysis.editorialBadges && aiAnalysis.editorialBadges[card.id];
+      if (aiBadge) badge = aiBadge;
       return {
         id: card.id,
         hidden: !!card.hidden,
@@ -86,7 +89,7 @@ export function buildModel(config, fetched) {
         value,
         displayValue: formatValue(value, card),
         context: card.context || '',
-        badge: evaluateBadge(value, card.rules, card.badge),
+        badge,
         history,
         stale,
       };
@@ -95,6 +98,6 @@ export function buildModel(config, fetched) {
   return {
     meta: { ...config.meta, refreshedAt: new Date().toISOString() },
     sections,
-    scenario: config.scenario,
+    scenario: (aiAnalysis && aiAnalysis.scenario) || config.scenario,
   };
 }

@@ -158,3 +158,44 @@ test('buildModel propage le flag hidden', () => {
   assert.equal(cards[0].hidden, true);
   assert.equal(cards[1].hidden, false);
 });
+
+test("buildModel remplace le scénario par celui de l'analyse IA", () => {
+  const config = {
+    meta: {}, scenario: { spiral: { probability: 'X', bullets: ['c'] }, noSpiral: {}, thresholds: ['old'] },
+    sections: [],
+  };
+  const ai = {
+    scenario: { spiral: { probability: '≈ 28 %', bullets: ['a'] }, noSpiral: { probability: '≈ 72 %', bullets: ['b'] }, thresholds: ['t-ai'] },
+    editorialBadges: {},
+  };
+  const m = buildModel(config, {}, ai);
+  assert.equal(m.scenario.spiral.probability, '≈ 28 %');
+  assert.deepEqual(m.scenario.thresholds, ['t-ai']);
+});
+
+test("buildModel écrase le badge d'une carte config avec le badge éditorial IA", () => {
+  const config = {
+    meta: {}, scenario: { spiral: {}, noSpiral: {}, thresholds: [] },
+    sections: [{ id: '04', title: 'X', cards: [
+      { id: 'oecd', label: 'OECD', decimals: 0, source: { type: 'config' },
+        fallback: { value: 4075, history: [4075] }, badge: { text: 'EN BAISSE', tone: 'warn' } },
+    ] }],
+  };
+  const ai = { scenario: { spiral: {}, noSpiral: {}, thresholds: [] },
+    editorialBadges: { oecd: { text: 'STOCK CRITIQUE', tone: 'alert' } } };
+  const card = buildModel(config, {}, ai).sections[0].cards[0];
+  assert.deepEqual(card.badge, { text: 'STOCK CRITIQUE', tone: 'alert' });
+});
+
+test('buildModel sans analyse IA garde le comportement config (rétrocompatible)', () => {
+  const config = {
+    meta: {}, scenario: { spiral: { probability: 'P', bullets: [] }, noSpiral: {}, thresholds: [] },
+    sections: [{ id: '04', title: 'X', cards: [
+      { id: 'oecd', label: 'OECD', decimals: 0, source: { type: 'config' },
+        fallback: { value: 4075, history: [4075] }, badge: { text: 'EN BAISSE', tone: 'warn' } },
+    ] }],
+  };
+  const card = buildModel(config, {}).sections[0].cards[0];
+  assert.deepEqual(card.badge, { text: 'EN BAISSE', tone: 'warn' });
+  assert.equal(buildModel(config, {}).scenario.spiral.probability, 'P');
+});
