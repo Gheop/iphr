@@ -88,6 +88,10 @@ export function renderHtml(model) {
     </header>
     ${model.sections.map(renderSection).join('')}
     ${renderScenario(model.scenario)}
+    <footer class="page-foot">
+      Fait avec <span class="heart" aria-hidden="true">♥</span> par Gheop ·
+      <a href="https://github.com/Gheop/iphr" target="_blank" rel="noopener">code source sur GitHub</a>
+    </footer>
   </main>
   <script src="/app.js"></script>
 </body>

@@ -37,6 +37,16 @@ test('renderHtml contient le titre et les sections', () => {
   assert.match(html, /t1/);
 });
 
+test('renderHtml inclut le footer avec le lien GitHub', () => {
+  const model = {
+    meta: {}, scenario: { spiral: {}, noSpiral: {}, thresholds: [] },
+    sections: [],
+  };
+  const html = renderHtml(model);
+  assert.match(html, /page-foot/);
+  assert.match(html, /github\.com\/Gheop\/iphr/);
+});
+
 test("renderHtml ignore les cartes hidden", () => {
   const model = {
     meta: {}, scenario: { spiral: {}, noSpiral: {}, thresholds: [] },

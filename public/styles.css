@@ -50,3 +50,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px; }
 .thresholds h3 { margin: 0 0 10px; font-size: 11px; letter-spacing: .12em;
   text-transform: uppercase; color: var(--muted); }
 .thresholds ul { columns: 2; } @media (max-width: 700px) { .thresholds ul { columns: 1; } }
+.page-foot { margin: 32px 0 8px; text-align: center; font-size: 12px; color: var(--muted); }
+.page-foot a { color: var(--neutral); text-decoration: none; }
+.page-foot a:hover { text-decoration: underline; }
+.page-foot .heart { color: var(--alert); }
