@@ -57,6 +57,23 @@ test('parseAnalysis renvoie null si le scénario est incomplet', () => {
   assert.equal(parseAnalysis('pas de json'), null);
 });
 
+test('parseAnalysis ignore un badge sur une carte non éditoriale (ex. carte live)', () => {
+  const obj = {
+    scenario: {
+      spiral: { probability: '≈ 30 %', bullets: ['x'] },
+      noSpiral: { probability: '≈ 70 %', bullets: ['y'] },
+      thresholds: ['t'],
+    },
+    editorialBadges: {
+      brent: { text: 'PIÉGÉ', tone: 'alert' },   // carte live → doit être ignorée
+      oecd: { text: 'TENSION', tone: 'warn' },     // carte config → conservée
+    },
+  };
+  const a = parseAnalysis(JSON.stringify(obj));
+  assert.equal(a.editorialBadges.brent, undefined);
+  assert.deepEqual(a.editorialBadges.oecd, { text: 'TENSION', tone: 'warn' });
+});
+
 import { analyze } from '../src/ai.js';
 
 const RESP = (text) => ({ ok: true, json: async () => ({ content: [{ type: 'text', text }] }) });

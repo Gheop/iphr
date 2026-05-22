@@ -34,6 +34,7 @@ function cleanBadges(raw) {
   const out = {};
   if (raw && typeof raw === 'object') {
     for (const [id, b] of Object.entries(raw)) {
+      if (!EDITORIAL_IDS.includes(id)) continue;
       if (b && typeof b.text === 'string' && b.text.trim() && TONES.has(b.tone)) {
         out[id] = { text: b.text.trim(), tone: b.tone };
       }
