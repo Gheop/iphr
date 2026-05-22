@@ -49,6 +49,26 @@ function resolveCard(card, fetched) {
     const fb = card.fallback ?? {};
     return { value: fb.value ?? null, history: fb.history ?? [], stale: true };
   }
+  // 1b. moyenne d'inputs (ex. ISM proxy = moyenne d'indices Fed régionaux)
+  if (card.compute === 'average') {
+    const ids = card.inputs || [];
+    const vals = ids.map((id) => fetched[id]?.value).filter((v) => Number.isFinite(v));
+    if (vals.length) {
+      const value = vals.reduce((a, b) => a + b, 0) / vals.length;
+      const hists = ids.map((id) => fetched[id]?.history || []).filter((h) => h.length);
+      let history = [];
+      if (hists.length) {
+        const n = Math.min(...hists.map((h) => h.length));
+        for (let i = 0; i < n; i++) {
+          const slice = hists.map((h) => h[h.length - n + i]);
+          history.push(slice.reduce((a, b) => a + b, 0) / slice.length);
+        }
+      }
+      return { value, history, stale: false };
+    }
+    const fb = card.fallback ?? {};
+    return { value: fb.value ?? null, history: fb.history ?? [], stale: true };
+  }
   // 2. source live (fred/yahoo)
   const live = fetched[card.id];
   if (live && Number.isFinite(live.value)) {

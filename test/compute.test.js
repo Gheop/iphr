@@ -199,3 +199,43 @@ test('buildModel sans analyse IA garde le comportement config (rétrocompatible)
   assert.deepEqual(card.badge, { text: 'EN BAISSE', tone: 'warn' });
   assert.equal(buildModel(config, {}).scenario.spiral.probability, 'P');
 });
+
+test("buildModel calcule la moyenne (compute average) des inputs", () => {
+  const config = {
+    meta: {}, scenario: { spiral: {}, noSpiral: {}, thresholds: [] },
+    sections: [{ id: '03', title: 'X', cards: [
+      { id: 'ism', label: 'ISM', decimals: 0, compute: 'average', inputs: ['a', 'b'],
+        fallback: { value: 0, history: [] } },
+    ] }],
+  };
+  const fetched = { a: { value: 20, history: [18, 20] }, b: { value: 30, history: [28, 30] } };
+  const card = buildModel(config, fetched).sections[0].cards[0];
+  assert.equal(card.value, 25);
+  assert.deepEqual(card.history, [23, 25]);
+  assert.equal(card.stale, false);
+});
+
+test("buildModel average : un input manquant → moyenne des disponibles", () => {
+  const config = {
+    meta: {}, scenario: { spiral: {}, noSpiral: {}, thresholds: [] },
+    sections: [{ id: '03', title: 'X', cards: [
+      { id: 'ism', label: 'ISM', decimals: 0, compute: 'average', inputs: ['a', 'b'],
+        fallback: { value: 99, history: [] } },
+    ] }],
+  };
+  const card = buildModel(config, { a: { value: 40, history: [40] } }).sections[0].cards[0];
+  assert.equal(card.value, 40);
+});
+
+test("buildModel average : aucun input → fallback + stale", () => {
+  const config = {
+    meta: {}, scenario: { spiral: {}, noSpiral: {}, thresholds: [] },
+    sections: [{ id: '03', title: 'X', cards: [
+      { id: 'ism', label: 'ISM', decimals: 0, compute: 'average', inputs: ['a', 'b'],
+        fallback: { value: 25, history: [25] } },
+    ] }],
+  };
+  const card = buildModel(config, {}).sections[0].cards[0];
+  assert.equal(card.value, 25);
+  assert.equal(card.stale, true);
+});
