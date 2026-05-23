@@ -47,6 +47,13 @@ WTFPL — voir [LICENSE](LICENSE). Fais-en ce que tu veux.
 
 ## Changelog
 
+### v0.3.1 — SPR et US Commercial Crude en live via EIA (2026-05-23)
+
+- Les deux séries renvoyaient HTTP 400 sur FRED depuis la mise en ligne (codes WCSSTUS1 /
+  WCESTUS1 sont des séries EIA, pas FRED). Basculées sur le endpoint EIA `petroleum/stoc/wstk`
+  (hebdomadaire, facet `series`). Le client `fetchEiaSeries` accepte maintenant des options
+  `facetKey` et `frequency` pour supporter cet endpoint en plus de STEO.
+
 ### v0.3.0 — Plus de sources live + bloc IA raffiné (2026-05-23)
 
 - Salaires négociés EU en live via l'API ECB ; stocks OCDE commerciaux via l'API EIA

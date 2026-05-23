@@ -85,11 +85,11 @@
     {
       "id": "04", "title": "STOCKS PÉTROLIERS",
       "cards": [
-        { "id": "spr", "label": "SPR US", "sourceTag": "millions bbl · FRED WCSSTUS1", "suffix": " mb", "decimals": 0, "transform": "thousandsToMb",
-          "source": { "type": "fred", "series": "WCSSTUS1" }, "context": "-209 mb vs 2022", "badge": { "text": "VIDE", "tone": "alert" },
+        { "id": "spr", "label": "SPR US", "sourceTag": "millions bbl · EIA WCSSTUS1", "suffix": " mb", "decimals": 0, "transform": "thousandsToMb",
+          "source": { "type": "eia", "route": "petroleum/stoc/wstk", "seriesId": "WCSSTUS1", "facet": "series", "frequency": "weekly" }, "context": "-209 mb vs 2022", "badge": { "text": "VIDE", "tone": "alert" },
           "fallback": { "value": 384, "history": [600,560,520,480,450,430,415,405,398,392,387,384] } },
-        { "id": "crude", "label": "US Commercial Crude", "sourceTag": "millions bbl · FRED WCESTUS1", "suffix": " mb", "decimals": 0, "transform": "thousandsToMb",
-          "source": { "type": "fred", "series": "WCESTUS1" }, "context": "-13 mb en 3 semaines", "badge": { "text": "DRAW", "tone": "warn" },
+        { "id": "crude", "label": "US Commercial Crude", "sourceTag": "millions bbl · EIA WCESTUS1", "suffix": " mb", "decimals": 0, "transform": "thousandsToMb",
+          "source": { "type": "eia", "route": "petroleum/stoc/wstk", "seriesId": "WCESTUS1", "facet": "series", "frequency": "weekly" }, "context": "-13 mb en 3 semaines", "badge": { "text": "DRAW", "tone": "warn" },
           "fallback": { "value": 453, "history": [475,472,470,468,466,464,462,460,458,456,454,453] } },
         { "id": "oecd", "label": "OECD Commercial (EIA)", "sourceTag": "mb · EIA", "suffix": " mb", "decimals": 0,
           "source": { "type": "eia", "route": "steo", "seriesId": "PASC_OECD_T3" }, "context": "stocks commerciaux OCDE",

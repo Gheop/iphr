@@ -42,3 +42,12 @@ test("parseEia trie par période même si l'ordre API est mélangé", () => {
   assert.equal(value, 2860);
   assert.deepEqual(history, [2810, 2840, 2860]);
 });
+
+test("fetchEiaSeries accepte un facet et une fréquence personnalisés (route petroleum)", async () => {
+  let url = '';
+  const fakeFetch = async (u) => { url = u; return { ok: true, json: async () => SAMPLE }; };
+  await fetchEiaSeries('petroleum/stoc/wstk', 'WCSSTUS1', 'K', fakeFetch, { facetKey: 'series', frequency: 'weekly' });
+  assert.match(url, /v2\/petroleum\/stoc\/wstk\/data/);
+  assert.match(url, /facets\[series\]\[\]=WCSSTUS1/);
+  assert.match(url, /frequency=weekly/);
+});

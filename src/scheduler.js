@@ -35,7 +35,10 @@ export async function refresh(config, deps = {}) {
           fetched[card.id] = await fetchEcb(src.flow, src.key);
         } else if (src.type === 'eia') {
           if (!eiaKey) throw new Error('EIA_API_KEY manquante');
-          fetched[card.id] = await fetchEia(src.route, src.seriesId, eiaKey);
+          fetched[card.id] = await fetchEia(src.route, src.seriesId, eiaKey, undefined, {
+            facetKey: src.facet,
+            frequency: src.frequency,
+          });
         }
       } catch (err) {
         log.warn?.(`[refresh] ${card.id}: ${err.message} (cache conservé)`);
