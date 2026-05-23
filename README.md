@@ -24,10 +24,11 @@ npm test
 
 ## Données
 
-- Live : FRED (taux, breakevens, Michigan, 5Y5Y forward, Atlanta wage, stocks pétroliers US) et
-  Yahoo Finance (Brent, WTI, RBOB, Heating Oil pour le crack spread, MOVE).
-- Repli config (`config/indicators.json`) : indicateurs sans source gratuite (ISM Prices Paid,
-  OECD on-land, floating storage, backwardation, 5Y5Y swap, salaires UE) et bloc scénario.
+- Live : FRED (taux, breakevens, Michigan, 5Y5Y forward, Atlanta wage, stocks pétroliers US,
+  Prices Paid Fed régionales), Yahoo Finance (Brent, WTI, RBOB, Heating Oil pour le crack
+  spread, MOVE), ECB (salaires négociés EU), EIA (stocks OCDE commerciaux).
+- Repli config (`config/indicators.json`) : indicateurs sans source gratuite (backwardation
+  Brent, floating storage) et bloc scénario par défaut.
 
 ## Analyse IA
 
@@ -45,6 +46,15 @@ PAS sur le retour de l'inflation (Mai 2026) » : https://www.youtube.com/watch?v
 WTFPL — voir [LICENSE](LICENSE). Fais-en ce que tu veux.
 
 ## Changelog
+
+### v0.3.0 — Plus de sources live + bloc IA raffiné (2026-05-23)
+
+- Salaires négociés EU en live via l'API ECB ; stocks OCDE commerciaux via l'API EIA
+- ISM Prices Paid remplacé par un proxy live (moyenne des indices « prices paid » des Fed de
+  New York et Philadelphie) ; 5Y5Y swap suivi via le forward breakeven FRED (T5YIFR)
+- Bloc scénario IA : titres rétablis, puces et seuils plus courts, prochaine date FOMC réelle
+  injectée depuis le config (pas d'invention de date)
+- Restent en repli config : backwardation Brent et floating storage (pas de source gratuite)
 
 ### v0.2.1 — Analyse IA à heure fixe (2026-05-22)
 
