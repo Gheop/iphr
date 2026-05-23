@@ -34,6 +34,7 @@ startAi(
     rebuild();
     console.log(`[iphr] analyse IA appliquée (générée ${ai.generatedAt})`);
   },
+  { fomcDates: config.fomcDates },
 );
 
 const app = express();

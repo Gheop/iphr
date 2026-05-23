@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPrompt, parseAnalysis } from '../src/ai.js';
+import { buildPrompt, parseAnalysis, nextFomcLabel } from '../src/ai.js';
 
 const MODEL = {
   meta: { title: 'Régime IPHR' },
@@ -30,13 +30,13 @@ const VALID = JSON.stringify({
     noSpiral: { probability: '≈ 72 %', bullets: ['c'] },
     thresholds: ['t1', 't2'],
   },
-  editorialBadges: { oecd: { text: 'EN BAISSE', tone: 'warn' } },
+  editorialBadges: { backwardation: { text: 'EN BAISSE', tone: 'warn' } },
 });
 
 test('parseAnalysis accepte un JSON valide', () => {
   const a = parseAnalysis(VALID);
   assert.equal(a.scenario.spiral.probability, '≈ 28 %');
-  assert.deepEqual(a.editorialBadges.oecd, { text: 'EN BAISSE', tone: 'warn' });
+  assert.deepEqual(a.editorialBadges.backwardation, { text: 'EN BAISSE', tone: 'warn' });
 });
 
 test("parseAnalysis extrait le JSON même entouré de texte", () => {
@@ -46,9 +46,9 @@ test("parseAnalysis extrait le JSON même entouré de texte", () => {
 
 test("parseAnalysis rejette un badge au tone invalide mais garde l'analyse", () => {
   const bad = JSON.parse(VALID);
-  bad.editorialBadges.oecd.tone = 'rouge';
+  bad.editorialBadges.backwardation.tone = 'rouge';
   const a = parseAnalysis(JSON.stringify(bad));
-  assert.equal(a.editorialBadges.oecd, undefined);
+  assert.equal(a.editorialBadges.backwardation, undefined);
   assert.ok(a.scenario);
 });
 
@@ -66,12 +66,12 @@ test('parseAnalysis ignore un badge sur une carte non éditoriale (ex. carte liv
     },
     editorialBadges: {
       brent: { text: 'PIÉGÉ', tone: 'alert' },   // carte live → doit être ignorée
-      oecd: { text: 'TENSION', tone: 'warn' },     // carte config → conservée
+      backwardation: { text: 'TENSION', tone: 'warn' },     // carte config → conservée
     },
   };
   const a = parseAnalysis(JSON.stringify(obj));
   assert.equal(a.editorialBadges.brent, undefined);
-  assert.deepEqual(a.editorialBadges.oecd, { text: 'TENSION', tone: 'warn' });
+  assert.deepEqual(a.editorialBadges.backwardation, { text: 'TENSION', tone: 'warn' });
 });
 
 import { analyze } from '../src/ai.js';
@@ -102,4 +102,28 @@ test('analyze renvoie null sans clé (aucun appel)', async () => {
 test('analyze renvoie null sur HTTP non-ok', async () => {
   const a = await analyze(MODEL, { apiKey: 'K', fetchImpl: async () => ({ ok: false, status: 429, text: async () => 'rate' }), log: { warn() {} } });
   assert.equal(a, null);
+});
+
+test('parseAnalysis garde le label fourni et complète le label manquant', () => {
+  const withLabel = JSON.parse(VALID);
+  withLabel.scenario.spiral.label = 'Régime de surchauffe';
+  const a1 = parseAnalysis(JSON.stringify(withLabel));
+  assert.equal(a1.scenario.spiral.label, 'Régime de surchauffe');
+  assert.equal(a1.scenario.noSpiral.label, 'Pas de spirale');
+});
+
+test('nextFomcLabel renvoie la prochaine date future formatée FR', () => {
+  const now = Date.parse('2026-05-22T12:00:00Z');
+  const dates = ['2026-04-29', '2026-06-17', '2026-07-29'];
+  assert.equal(nextFomcLabel(dates, now), '17 juin 2026');
+});
+
+test('nextFomcLabel renvoie null si liste vide ou toutes passées', () => {
+  assert.equal(nextFomcLabel([], Date.now()), null);
+  assert.equal(nextFomcLabel(['2020-01-01'], Date.parse('2026-05-22T00:00:00Z')), null);
+});
+
+test('buildPrompt inclut la prochaine FOMC quand fournie, sinon non', () => {
+  assert.match(buildPrompt(MODEL, { nextFomc: '17 juin 2026' }).user, /FOMC.*17 juin 2026/);
+  assert.doesNotMatch(buildPrompt(MODEL).user, /FOMC/);
 });

@@ -49,6 +49,26 @@ function resolveCard(card, fetched) {
     const fb = card.fallback ?? {};
     return { value: fb.value ?? null, history: fb.history ?? [], stale: true };
   }
+  // 1b. moyenne d'inputs (ex. ISM proxy = moyenne d'indices Fed régionaux)
+  if (card.compute === 'average') {
+    const ids = card.inputs || [];
+    const vals = ids.map((id) => fetched[id]?.value).filter((v) => Number.isFinite(v));
+    if (vals.length) {
+      const value = vals.reduce((a, b) => a + b, 0) / vals.length;
+      const hists = ids.map((id) => fetched[id]?.history || []).filter((h) => h.length);
+      let history = [];
+      if (hists.length) {
+        const n = Math.min(...hists.map((h) => h.length));
+        for (let i = 0; i < n; i++) {
+          const slice = hists.map((h) => h[h.length - n + i]);
+          history.push(slice.reduce((a, b) => a + b, 0) / slice.length);
+        }
+      }
+      return { value, history, stale: false };
+    }
+    const fb = card.fallback ?? {};
+    return { value: fb.value ?? null, history: fb.history ?? [], stale: true };
+  }
   // 2. source live (fred/yahoo)
   const live = fetched[card.id];
   if (live && Number.isFinite(live.value)) {
@@ -76,7 +96,10 @@ export function buildModel(config, fetched, aiAnalysis = null) {
     cards: section.cards.map((card) => {
       const { value, history, stale } = resolveCard(card, fetched);
       let badge = evaluateBadge(value, card.rules, card.badge);
-      const aiBadge = aiAnalysis && aiAnalysis.editorialBadges && aiAnalysis.editorialBadges[card.id];
+      // Le badge IA n'écrase QUE les cartes purement éditoriales (source config).
+      // Indépendant du cache : si la carte passe en live, son ancien badge IA cesse de s'appliquer.
+      const isEditorialCard = card.source?.type === 'config';
+      const aiBadge = isEditorialCard && aiAnalysis && aiAnalysis.editorialBadges && aiAnalysis.editorialBadges[card.id];
       if (aiBadge) badge = aiBadge;
       return {
         id: card.id,

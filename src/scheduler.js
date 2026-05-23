@@ -1,6 +1,8 @@
 import { readCache, writeCache } from './cache.js';
 import { fetchFredSeries } from './sources/fred.js';
 import { fetchYahooSymbol } from './sources/yahoo.js';
+import { fetchEcbSeries } from './sources/ecb.js';
+import { fetchEiaSeries } from './sources/eia.js';
 
 const CACHE_PATH = process.env.CACHE_PATH || 'data/cache.json';
 
@@ -9,6 +11,9 @@ export async function refresh(config, deps = {}) {
     fredKey = process.env.FRED_API_KEY,
     fetchFred = fetchFredSeries,
     fetchYahoo = fetchYahooSymbol,
+    eiaKey = process.env.EIA_API_KEY,
+    fetchEcb = fetchEcbSeries,
+    fetchEia = fetchEiaSeries,
     cachePath = CACHE_PATH,
     log = console,
   } = deps;
@@ -26,6 +31,11 @@ export async function refresh(config, deps = {}) {
           fetched[card.id] = await fetchFred(src.series, fredKey);
         } else if (src.type === 'yahoo') {
           fetched[card.id] = await fetchYahoo(src.symbol);
+        } else if (src.type === 'ecb') {
+          fetched[card.id] = await fetchEcb(src.flow, src.key);
+        } else if (src.type === 'eia') {
+          if (!eiaKey) throw new Error('EIA_API_KEY manquante');
+          fetched[card.id] = await fetchEia(src.route, src.seriesId, eiaKey);
         }
       } catch (err) {
         log.warn?.(`[refresh] ${card.id}: ${err.message} (cache conservé)`);

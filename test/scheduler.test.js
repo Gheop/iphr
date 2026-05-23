@@ -35,3 +35,39 @@ test("refresh conserve le cache précédent quand une source échoue", async () 
   assert.equal(fetched.ust30.value, 5.0); // valeur du cache conservée
   assert.equal(fetched.brent.value, 110);
 });
+
+test('refresh route ecb et eia vers les bons clients', async () => {
+  const cfg = { sections: [{ id: '1', title: 't', cards: [
+    { id: 'euwage', source: { type: 'ecb', flow: 'STS', key: 'K1' } },
+    { id: 'oecd', source: { type: 'eia', route: 'steo', seriesId: 'PASC_OECD_T3' } },
+  ] }] };
+  const cachePath = join(mkdtempSync(join(tmpdir(), 'iphr-')), 'cache.json');
+  const fetched = await refresh(cfg, {
+    fredKey: 'F', eiaKey: 'E',
+    fetchFred: async () => ({ value: 0, history: [] }),
+    fetchYahoo: async () => ({ value: 0, history: [] }),
+    fetchEcb: async (flow, key) => ({ value: 1.87, history: [1.87] }),
+    fetchEia: async (route, id) => ({ value: 2860, history: [2860] }),
+    cachePath, log: { warn() {} },
+  });
+  assert.equal(fetched.euwage.value, 1.87);
+  assert.equal(fetched.oecd.value, 2860);
+});
+
+test("refresh : eia sans clé → stale (pas d'appel)", async () => {
+  const cfg = { sections: [{ id: '1', title: 't', cards: [
+    { id: 'oecd', source: { type: 'eia', route: 'steo', seriesId: 'X' } },
+  ] }] };
+  const cachePath = join(mkdtempSync(join(tmpdir(), 'iphr-')), 'cache.json');
+  let called = false;
+  const fetched = await refresh(cfg, {
+    fredKey: 'F', eiaKey: '',
+    fetchFred: async () => ({ value: 0, history: [] }),
+    fetchYahoo: async () => ({ value: 0, history: [] }),
+    fetchEcb: async () => ({ value: 0, history: [] }),
+    fetchEia: async () => { called = true; return { value: 1, history: [] }; },
+    cachePath, log: { warn() {} },
+  });
+  assert.equal(called, false);
+  assert.deepEqual(fetched.oecd, { value: null, history: [] });
+});

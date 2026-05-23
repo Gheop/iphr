@@ -1,5 +1,5 @@
 import { readCache, writeCache } from './cache.js';
-import { analyze } from './ai.js';
+import { analyze, nextFomcLabel } from './ai.js';
 
 const AI_CACHE_PATH = process.env.AI_CACHE_PATH || 'data/ai-analysis.json';
 
@@ -48,6 +48,7 @@ export async function runAi(getModel, deps = {}) {
     apiKey = process.env.ANTHROPIC_API_KEY,
     analyzeImpl = analyze,
     force = false,
+    fomcDates = [],
     log = console,
   } = deps;
 
@@ -56,7 +57,8 @@ export async function runAi(getModel, deps = {}) {
   if (!apiKey) return hasCache ? cache : null;
   if (!force && !shouldRefresh(cache, hours, now)) return hasCache ? cache : null;
 
-  const analysis = await analyzeImpl(getModel(), { apiKey, log });
+  const extras = { nextFomc: nextFomcLabel(fomcDates, now) };
+  const analysis = await analyzeImpl(getModel(), { apiKey, log, extras });
   if (!analysis) {
     log.warn?.('[ai-scheduler] analyse vide — cache conservé');
     return hasCache ? cache : null;
