@@ -239,3 +239,20 @@ test("buildModel average : aucun input → fallback + stale", () => {
   assert.equal(card.value, 25);
   assert.equal(card.stale, true);
 });
+
+test("buildModel ignore un badge IA sur une carte live (source non config)", () => {
+  const config = {
+    meta: {}, scenario: { spiral: {}, noSpiral: {}, thresholds: [] },
+    sections: [{ id: '03', title: 'X', cards: [
+      { id: 'swap5y5y', label: 'Swap', decimals: 2, suffix: '%',
+        source: { type: 'fred', series: 'T5YIFR' },
+        fallback: { value: 2.29, history: [2.29] },
+        badge: { text: 'STABLE', tone: 'ok' } },
+    ] }],
+  };
+  // Cache IA antérieur (avant que la carte ne passe en live) qui voulait écraser :
+  const ai = { scenario: { spiral: {}, noSpiral: {}, thresholds: [] },
+    editorialBadges: { swap5y5y: { text: 'DÉRIVE LENTE', tone: 'warn' } } };
+  const card = buildModel(config, {}, ai).sections[0].cards[0];
+  assert.deepEqual(card.badge, { text: 'STABLE', tone: 'ok' }); // badge live, pas IA
+});

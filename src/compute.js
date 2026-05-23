@@ -96,7 +96,10 @@ export function buildModel(config, fetched, aiAnalysis = null) {
     cards: section.cards.map((card) => {
       const { value, history, stale } = resolveCard(card, fetched);
       let badge = evaluateBadge(value, card.rules, card.badge);
-      const aiBadge = aiAnalysis && aiAnalysis.editorialBadges && aiAnalysis.editorialBadges[card.id];
+      // Le badge IA n'écrase QUE les cartes purement éditoriales (source config).
+      // Indépendant du cache : si la carte passe en live, son ancien badge IA cesse de s'appliquer.
+      const isEditorialCard = card.source?.type === 'config';
+      const aiBadge = isEditorialCard && aiAnalysis && aiAnalysis.editorialBadges && aiAnalysis.editorialBadges[card.id];
       if (aiBadge) badge = aiBadge;
       return {
         id: card.id,
