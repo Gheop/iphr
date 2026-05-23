@@ -93,3 +93,15 @@ test('runAi avec force régénère même si le cache est récent', async () => {
   await runAi(() => ({ sections: [] }), { ...deps, now: now + 3600 * 1000, force: true });
   assert.equal(calls, 2);
 });
+
+test('runAi passe la prochaine date FOMC à analyze via extras', async () => {
+  const cachePath = join(mkdtempSync(join(tmpdir(), 'iphr-ai-')), 'ai.json');
+  let seenExtras = null;
+  await runAi(() => ({ sections: [] }), {
+    cachePath, hours: 24, now: Date.parse('2026-05-22T12:00:00Z'), apiKey: 'K',
+    fomcDates: ['2026-06-17'],
+    analyzeImpl: async (_model, d) => { seenExtras = d.extras; return ANALYSIS; },
+    log: { warn() {} },
+  });
+  assert.equal(seenExtras.nextFomc, '17 juin 2026');
+});
