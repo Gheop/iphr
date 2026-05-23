@@ -1,7 +1,21 @@
 const TONES = new Set(['alert', 'warn', 'ok', 'neutral']);
-const EDITORIAL_IDS = ['backwardation', 'swap5y5y', 'ismprices', 'oecd', 'floating', 'euwage'];
+const EDITORIAL_IDS = ['backwardation', 'floating'];
 
-export function buildPrompt(model) {
+const DEFAULT_LABELS = { spiral: 'Scénario spirale', noSpiral: 'Pas de spirale' };
+
+export function nextFomcLabel(dates, nowMs) {
+  if (!Array.isArray(dates)) return null;
+  const today = new Date(nowMs);
+  const startOfDay = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  const next = dates
+    .map((d) => Date.parse(d))
+    .filter((t) => Number.isFinite(t) && t >= startOfDay)
+    .sort((a, b) => a - b)[0];
+  if (next === undefined) return null;
+  return new Date(next).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+export function buildPrompt(model, extras = {}) {
   const lines = [];
   for (const section of model.sections) {
     lines.push(`## ${section.id} — ${section.title}`);
@@ -12,21 +26,25 @@ export function buildPrompt(model) {
   }
   const system = [
     "Tu es un analyste macro. À partir des indicateurs marché fournis, tu produis l'analyse du régime",
-    "« Inflation-Push Hawkish Repricing » : deux scénarios (spirale inflationniste vs pas de spirale)",
-    "avec leur probabilité, des puces d'argumentaire, des seuils de bascule à surveiller, et un badge",
-    "court pour quelques indicateurs sans source de marché.",
+    "« Inflation-Push Hawkish Repricing » : deux scénarios (spirale inflationniste vs pas de spirale).",
     '',
     'RÈGLES STRICTES :',
     "- N'invente AUCUNE valeur chiffrée d'indicateur : utilise uniquement les valeurs fournies.",
-    '- Les deux probabilités doivent sommer à ~100 %.',
+    "- N'invente AUCUNE date : n'utilise que la date FOMC fournie ci-dessous, si présente.",
+    '- Chaque scénario a un label court (ex. « Scénario spirale », « Pas de spirale », ou pertinent)',
+    '  et une probabilité ; les deux probabilités somment à ~100 %.',
+    '- bullets : COURTES, une ligne, format « sujet — constat » (ex. « Ménages en panique — Michigan 4,8 % »), 4-5 max.',
+    '- thresholds : chips COURTS de 3-6 mots, surtout des déclencheurs chiffrés (ex. « HY OAS > 290 bps »,',
+    '  « Atlanta wage > 4,5 % ↑ »). Tu peux inclure UN chip d\'événement daté avec la date FOMC fournie. 4-6 max.',
     `- editorialBadges : uniquement pour ces ids si pertinent : ${EDITORIAL_IDS.join(', ')}.`,
     '- tone ∈ alert | warn | ok | neutral. text = libellé court en MAJUSCULES (1-2 mots).',
     '- Réponds UNIQUEMENT par un objet JSON, sans texte autour, à ce format :',
-    '{"scenario":{"spiral":{"probability":"≈ NN %","bullets":["…"]},',
-    '"noSpiral":{"probability":"≈ NN %","bullets":["…"]},"thresholds":["…"]},',
+    '{"scenario":{"spiral":{"label":"…","probability":"≈ NN %","bullets":["…"]},',
+    '"noSpiral":{"label":"…","probability":"≈ NN %","bullets":["…"]},"thresholds":["…"]},',
     '"editorialBadges":{"<id>":{"text":"…","tone":"…"}}}',
   ].join('\n');
-  const user = `Indicateurs du jour :\n\n${lines.join('\n')}`;
+  const cal = extras.nextFomc ? `\n\nCalendrier : prochaine réunion FOMC le ${extras.nextFomc}.` : '';
+  const user = `Indicateurs du jour :\n\n${lines.join('\n')}${cal}`;
   return { system, user };
 }
 
@@ -66,8 +84,16 @@ export function parseAnalysis(text) {
       !sc.thresholds.every((t) => typeof t === 'string' && t.trim())) return null;
   return {
     scenario: {
-      spiral: { probability: sc.spiral.probability.trim(), bullets: sc.spiral.bullets },
-      noSpiral: { probability: sc.noSpiral.probability.trim(), bullets: sc.noSpiral.bullets },
+      spiral: {
+        label: (typeof sc.spiral.label === 'string' && sc.spiral.label.trim()) || DEFAULT_LABELS.spiral,
+        probability: sc.spiral.probability.trim(),
+        bullets: sc.spiral.bullets,
+      },
+      noSpiral: {
+        label: (typeof sc.noSpiral.label === 'string' && sc.noSpiral.label.trim()) || DEFAULT_LABELS.noSpiral,
+        probability: sc.noSpiral.probability.trim(),
+        bullets: sc.noSpiral.bullets,
+      },
       thresholds: sc.thresholds,
     },
     editorialBadges: cleanBadges(obj.editorialBadges),
@@ -81,12 +107,13 @@ export async function analyze(model, deps = {}) {
     fetchImpl = fetch,
     maxTokens = 1500,
     log = console,
+    extras = {},
   } = deps;
   if (!apiKey) {
     log.info?.('[ai] ANTHROPIC_API_KEY absente — analyse IA désactivée');
     return null;
   }
-  const { system, user } = buildPrompt(model);
+  const { system, user } = buildPrompt(model, extras);
   try {
     const res = await fetchImpl('https://api.anthropic.com/v1/messages', {
       method: 'POST',
