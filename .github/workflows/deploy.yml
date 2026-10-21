@@ -43,15 +43,19 @@ jobs:
             ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
           cache-from: type=registry,ref=ghcr.io/${{ env.IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=ghcr.io/${{ env.IMAGE_NAME }}:buildcache,mode=max
-      - name: Deploy to k3s
-        uses: appleboy/ssh-action@v1
+      - uses: webfactory/ssh-agent@v0.10.0
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            export KUBECONFIG=~/.kube/config
-            kubectl set image deployment/iphr \
-              iphr=ghcr.io/gheop/iphr:${{ github.sha }} -n iphr
-            kubectl rollout status deployment/iphr -n iphr --timeout=120s
+          ssh-private-key: ${{ secrets.GHEOP_SSH_KEY }}
+
+      - name: known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H gheop.com >> ~/.ssh/known_hosts
+
+      # Clé de déploiement bridée (ci-deploy-2) : côté gheop, seules ces deux
+      # commandes passent (~/bin/ci-deploy-guard.sh). Les manifestes ne sont PAS
+      # appliqués par la CI : les appliquer à la main quand ils changent.
+      - name: Déploiement
+        run: |
+          ssh sib@gheop.com "kubectl --kubeconfig ~/.kube/config -n iphr set image deployment/iphr iphr=ghcr.io/gheop/iphr:${{ github.sha }}"
+          ssh sib@gheop.com "kubectl --kubeconfig ~/.kube/config -n iphr rollout status deployment/iphr --timeout=180s"
