@@ -36,6 +36,13 @@ Le bloc scénario et les badges des cartes sans source de marché sont régéné
 5 h 30 (heure de Paris) par l'API Anthropic, à partir des valeurs live du dashboard. Nécessite
 `ANTHROPIC_API_KEY` ; sans elle, le dashboard retombe sur le texte statique du config.
 
+## Audience
+
+Chaque `GET /` incrémente `iphr_page_views_total{kind="human"|"bot"}`, exposé sur un port
+interne (`METRICS_PORT`, 9464 par défaut) que Prometheus scrape. Les rappels de `/api/data`
+ne comptent pas. Vues humaines des 30 derniers jours :
+`sum(increase(iphr_page_views_total{kind="human"}[30d]))`.
+
 ## Origine
 
 L'idée de ce dashboard vient de la vidéo « Point de marché : Ce que les marchés ne vous disent
@@ -46,6 +53,11 @@ PAS sur le retour de l'inflation (Mai 2026) » : https://www.youtube.com/watch?v
 WTFPL — voir [LICENSE](LICENSE). Fais-en ce que tu veux.
 
 ## Changelog
+
+### v0.4.0 — Comptage des vues (2026-11-21)
+
+- Compteur Prometheus `iphr_page_views_total` sur `GET /`, humains et robots séparés par
+  user-agent, servi sur un port interne (9464) hors Service et HTTPRoute
 
 ### v0.3.1 — SPR et US Commercial Crude en live via EIA (2026-05-23)
 
@@ -90,3 +102,9 @@ WTFPL — voir [LICENSE](LICENSE). Fais-en ce que tu veux.
 - Données live FRED + Yahoo, repli sur valeurs configurables
 - Sparklines SVG, thème sombre, rafraîchissement client toutes les 60 s
 - Déploiement k3s à iphr.gheop.com (Traefik + TLS Let's Encrypt)
+
+## README changelog
+
+| Version | Date       | Changes                                          |
+|---------|------------|--------------------------------------------------|
+| 1.0.0   | 2026-11-21 | Add Audience section and v0.4.0 changelog entry  |
