@@ -6,6 +6,7 @@ import { buildModel } from './compute.js';
 import { renderHtml } from './render.js';
 import { start } from './scheduler.js';
 import { startAi } from './ai-scheduler.js';
+import { createViewCounter } from './metrics.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
@@ -37,11 +38,23 @@ startAi(
   { fomcDates: config.fomcDates },
 );
 
+const views = createViewCounter();
+
 const app = express();
 app.use(express.static(join(root, 'public')));
 app.get('/healthz', (_req, res) => res.status(200).send('ok'));
 app.get('/api/data', (_req, res) => res.json(model));
-app.get('/', (_req, res) => res.type('html').send(renderHtml(model)));
+app.get('/', (req, res) => {
+  if (req.method === 'GET') views.record(req.get('user-agent'));
+  res.type('html').send(renderHtml(model));
+});
 
 const port = Number(process.env.PORT || 8080);
 app.listen(port, () => console.log(`[iphr] écoute sur :${port}`));
+
+// Port séparé : ni le Service ni la HTTPRoute ne l'exposent, seul Prometheus
+// le joint dans le cluster.
+const metrics = express();
+metrics.get('/metrics', (_req, res) => res.type('text/plain; version=0.0.4').send(views.render()));
+const metricsPort = Number(process.env.METRICS_PORT || 9464);
+metrics.listen(metricsPort, () => console.log(`[iphr] métriques sur :${metricsPort}/metrics`));
