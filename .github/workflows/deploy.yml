@@ -50,7 +50,9 @@ jobs:
       - name: known_hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H gheop.com >> ~/.ssh/known_hosts
+          # Clé d'hôte ed25519 de gheop.com épinglée : ssh-keyscan acceptait la
+          # première clé reçue (SHA256:9xfEi/bNtjBjXtDbTi5ZAcSMQ8xbFFVJVPeC6khh0s4).
+          echo 'gheop.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINiyqZa+PGfhUnp8BXZRrCA7mE6XL1ioskFqyERgonCQ' >> ~/.ssh/known_hosts
 
       # Clé de déploiement bridée (ci-deploy-2) : côté gheop, seules ces deux
       # commandes passent (~/bin/ci-deploy-guard.sh). Les manifestes ne sont PAS
